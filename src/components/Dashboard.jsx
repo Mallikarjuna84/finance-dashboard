@@ -10,7 +10,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { CSVLink } from "react-csv";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Tooltip, Legend);
 
@@ -32,15 +31,15 @@ export default function App() {
   const [transactions, setTransactions] = useState([]);
   const [search, setSearch] = useState("");
   const [dark, setDark] = useState(localStorage.getItem("theme") === "dark");
+  const [sortBy, setSortBy] = useState("date");
+  const [sortOrder, setSortOrder] = useState("asc"); // asc or desc
 
-  // Dark Mode toggle
   useEffect(() => {
     if (dark) document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
 
-  // Load transactions
   useEffect(() => {
     fetchTransactions().then((res) => {
       setTransactions(res);
@@ -48,15 +47,21 @@ export default function App() {
     });
   }, []);
 
-  // Summary calculations
   const income = transactions.filter((t) => t.type === "income").reduce((a, b) => a + b.amount, 0);
   const expense = transactions.filter((t) => t.type === "expense").reduce((a, b) => a + b.amount, 0);
   const balance = income - expense;
 
-  // Filtered transactions
-  const filtered = transactions.filter((t) => t.category.toLowerCase().includes(search.toLowerCase()));
+  const filtered = transactions
+    .filter((t) => t.category.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === "date") {
+        return sortOrder === "asc" ? new Date(a.date) - new Date(b.date) : new Date(b.date) - new Date(a.date);
+      } else if (sortBy === "amount") {
+        return sortOrder === "asc" ? a.amount - b.amount : b.amount - a.amount;
+      }
+      return 0;
+    });
 
-  // Line Chart Data
   const dates = [...new Set(transactions.map((t) => t.date))].sort();
   const balanceTrend = dates.map((date) => {
     const incomes = transactions.filter((t) => t.type === "income" && t.date <= date).reduce((a, b) => a + b.amount, 0);
@@ -77,7 +82,6 @@ export default function App() {
     ],
   };
 
-  // Pie Chart Data
   const categories = [...new Set(transactions.filter((t) => t.type === "expense").map((t) => t.category))];
   const pieData = {
     labels: categories,
@@ -92,17 +96,30 @@ export default function App() {
     ],
   };
 
-  // JSON download
-  const downloadJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions, null, 2));
-    const link = document.createElement("a");
-    link.href = dataStr;
-    link.download = "transactions.json";
-    link.click();
+  const exportJSON = () => {
+    const dataStr = JSON.stringify(filtered, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transactions.json";
+    a.click();
+  };
+
+  const exportCSV = () => {
+    const header = ["id", "date", "amount", "category", "type"];
+    const rows = filtered.map((t) => [t.id, t.date, t.amount, t.category, t.type]);
+    const csvContent = [header, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transactions.csv";
+    a.click();
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto font-sans">
+    <div className="p-6 max-w-5xl mx-auto font-sans">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Finance Dashboard</h1>
@@ -111,23 +128,6 @@ export default function App() {
           className="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition hover:scale-105"
         >
           {dark ? "Light Mode" : "Dark Mode"}
-        </button>
-      </div>
-
-      {/* Export Buttons */}
-      <div className="flex gap-4 mb-6">
-        <CSVLink
-          data={transactions}
-          filename={"transactions.csv"}
-          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
-        >
-          Export CSV
-        </CSVLink>
-        <button
-          onClick={downloadJSON}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-        >
-          Export JSON
         </button>
       </div>
 
@@ -147,7 +147,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Single Card for Both Charts */}
+      {/* Charts */}
       <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow hover:scale-105 transition-transform mb-6">
         <h2 className="text-gray-500 dark:text-gray-300 mb-4 text-center text-lg font-semibold">Financial Insights</h2>
         <div className="flex flex-col md:flex-row gap-6">
@@ -160,16 +160,38 @@ export default function App() {
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search category"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border p-2 rounded mb-2 w-full"
-        />
-        <table className="w-full text-left border-collapse">
+      {/* Filter, Search, Table, Export */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <input
+            type="text"
+            placeholder="Search category"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border p-2 rounded w-60"
+          />
+
+          <div className="flex gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="border p-2 rounded bg-purple-100 dark:bg-purple-700"
+            >
+              <option value="date">Sort by Date</option>
+              <option value="amount">Sort by Amount</option>
+            </select>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="border p-2 rounded bg-blue-100 dark:bg-blue-700"
+            >
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </div>
+        </div>
+
+        <table className="w-full text-left border-collapse mb-3">
           <thead>
             <tr className="border-b">
               <th className="py-2">Date</th>
@@ -189,6 +211,21 @@ export default function App() {
             ))}
           </tbody>
         </table>
+
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={exportCSV}
+            className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 transition"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={exportJSON}
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
+          >
+            Export JSON
+          </button>
+        </div>
       </div>
     </div>
   );
