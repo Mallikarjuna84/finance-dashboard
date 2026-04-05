@@ -1,38 +1,44 @@
-<<<<<<< HEAD
-# finance-dashboard
-=======
-# 💰 Finance Dashboard
+# Finance Dashboard
 
-## 📌 Overview
-A responsive finance dashboard to track transactions, visualize spending, and manage financial insights.
+A clean and interactive **Finance Dashboard** built with **React**, **TailwindCSS**, and **Chart.js**.  
+Track your income, expenses, and get visual insights into your financial activity. Designed with a **premium professional look** and responsive layout for both desktop and mobile devices.
 
-## 🚀 Features
-- Dashboard summary (Balance, Income, Expenses)
-- Charts (Line + Pie)
-- Transactions table
-- Search, Filter, Sorting
-- Role-based UI (Viewer/Admin)
-- Add transaction (Admin)
-- Insights section
-- Dark mode support
-- Local storage persistence
+---
 
-## 🛠 Tech Stack
-- React (Vite)
-- Tailwind CSS
-- Recharts
+## **Features**
 
-## ▶️ Run Locally
+### Dashboard Overview
+- **Summary Cards** for Total Balance, Income, and Expenses  
+- **Balance Trend** chart (line chart)  
+- **Spending Breakdown** chart (pie chart)  
 
-npm install
-npm run dev
+### Transactions
+- View transactions with **Date, Amount, Category, Type**  
+- **Search/filter** by category  
+- Responsive and hover-friendly table design  
 
-## 🌐 Live Demo
-(Add Vercel link here)
+### Advanced Features
+- **Dark Mode** toggle (saved in localStorage)  
+- **Data persistence** with mock API and localStorage  
+- **Export functionality**: CSV & JSON  
+- **Animations & transitions** on cards, table rows, and buttons  
+- **Responsive charts** with fixed professional size  
 
-## 📂 GitHub Repo
-(Add GitHub link here)
+---
 
-## ✨ Notes
-This project demonstrates frontend skills including UI design, state management, and data handling.
->>>>>>> 1f5ee52 (finance dashboard)
+## **Tech Stack**
+
+- **React 18** – Frontend library  
+- **TailwindCSS** – Styling and layout  
+- **Chart.js** – Line and Pie charts  
+- **LocalStorage** – Data persistence  
+- **Vite** – Dev server & build tool  
+
+---
+
+## **Setup Instructions**
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/<your-username>/finance-dashboard.git
+cd finance-dashboard
